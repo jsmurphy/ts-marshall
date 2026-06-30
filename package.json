@@ -1,0 +1,21 @@
+{
+  "name": "@ts/marshall",
+  "version": "1.0.0",
+  "description": "Distributed task-lock primitive (Marshall) with cooperative-abort support. Dependency-injected and portable across services.",
+  "type": "module",
+  "main": "./src/marshall.mjs",
+  "exports": {
+    ".": "./src/marshall.mjs"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check src/marshall.mjs"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
