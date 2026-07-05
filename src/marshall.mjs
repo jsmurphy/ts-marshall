@@ -325,6 +325,8 @@ export function createMarshall({ coll, logger, hardTimeout = 20, tasksName = 'ta
       const timeout = new Date(_start - this._timeout * 60 * 1000);
       const last_allowed_start = new Date(_start - this._mins * 60 * 1000);
 
+      // Return the pre-update document so the timed-out run's original start/host can be logged
+      // (returnDocument: 'after' would surface the new start we just wrote, not the stuck one).
       const timed_out = await tasks().findOneAndUpdate(
         {
           _id: this.id,
@@ -336,13 +338,17 @@ export function createMarshall({ coll, logger, hardTimeout = 20, tasksName = 'ta
           $unset: { error: '', result: '' },
         },
         {
-          returnDocument: 'after',
+          returnDocument: 'before',
         },
       );
 
       if (timed_out) {
-        log.warn({ id: this.id, timeout: this._timeout }, 'Last task run timed out - restarting task');
-        return timed_out;
+        log.warn(
+          { id: this.id, timeout: this._timeout, start: timed_out.start, host: timed_out.host },
+          'Last task run timed out - restarting task',
+        );
+        // We just claimed the lock; return the post-update state the caller checks (host === us).
+        return { ...timed_out, status: Marshall.Status.Started, start: new Date(_start), host: os.hostname(), timeout: this._timeout };
       }
 
       return tasks().findOneAndUpdate(
